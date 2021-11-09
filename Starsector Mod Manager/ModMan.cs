@@ -7,6 +7,10 @@ using System.CommandLine.Invocation;
 
 namespace Starsector_Mod_Manager
 {
+    public static class Globals
+    {
+        public static bool VERBOSE_FLAG = false;
+    }
     class ModMan
     {
         public static string modManVersion = "v0.0.1";
@@ -30,13 +34,17 @@ namespace Starsector_Mod_Manager
             rootCommand.AddOption(updateOption);
             rootCommand.AddOption(verboseOption);
 
-            rootCommand.Handler = CommandHandler.Create<string, bool, bool, bool>(commandHandler);
+            rootCommand.Handler = CommandHandler.Create<string, bool, bool, bool>(CommandProcessor);
 
             return rootCommand.Invoke(args);
         }
 
-        static void commandHandler(string path, bool checkforupdates, bool update, bool verbose)
+        static void CommandProcessor(string path, bool checkforupdates, bool update, bool verbose)
         {
+            if (verbose)
+            {
+                Globals.VERBOSE_FLAG = true;
+            }
             if (path == null)
             {
                 throw new DirectoryNotFoundException($"No path provided.");
@@ -49,46 +57,105 @@ namespace Starsector_Mod_Manager
             {
                 path = path.Remove(path.LastIndexOf(Path.AltDirectorySeparatorChar));
             }
-            if (Directory.Exists(path) == false)
+            if (!Directory.Exists(path))
             {
                 throw new DirectoryNotFoundException($"User defined path {path} does not exist.");
             }
-            if (checkforupdates == true && update == true)
+            if (checkforupdates && update)
             {
-                Console.WriteLine("\nNote: --update implies --checkforupdates.\n");
+                WriteVerbose("\nNote: --update implies --checkforupdates.\n");
             }
-            
-
-            if (verbose)
+            if (Globals.VERBOSE_FLAG)
             {
-                Console.WriteLine($"Path: {path}");
-                Console.WriteLine($"Check for updates: {checkforupdates}");
-                Console.WriteLine($"Update: {update}");
+                WriteVerbose("Verbose output enabled.");
             }
 
-            List<ModDataRow> modDataTable = fillModDataTable(path, verbose);
 
+            if (Globals.VERBOSE_FLAG)
+            {
+                WriteVerbose($"Path: {path}");
+                WriteVerbose($"Check for updates: {checkforupdates}");
+                WriteVerbose($"Update: {update}");
+            }
 
+            List<ModDataRow> modDataTable = FillModDataTable(path);
 
-           
+            foreach (ModDataRow row in modDataTable)
+            {
+                ModVersionInfo remoteInfo;
+                if (row.VersionInfo.ModVersion.Major.Equals("UNSUPPORTED"))
+                {
+                    continue;
+                }
+                try
+                {
+                remoteInfo = (UpdateAgent.GetRemoteVersionInfo(row)).Result;
+                }
+                catch (MalformedVersionFileException e)
+                {
+                    if (e.IsNull)
+                    {
+                        WriteError($"{e.UnsupportedMod}: Remote version file is null");
+                    }
+                    else
+                    {
+                        WriteError($"{e.UnsupportedMod}: Remote version file is not .version file, skipping...");
+                    }
+                    continue;
+                }
+                catch (AggregateException e) when (e.InnerException is MalformedVersionFileException x)
+                {
+                    if (x.IsNull)
+                    {
+                        WriteError($"{row.Name}: remote master version file is null, please manually check for updates");
+                    }
+                    else
+                    {
+                        WriteError($"{row.Name}: malformed remote master version file, please manually check for updates");
+                    }
+                    continue;
+                }
+                catch (AggregateException e) when (e.InnerException is not MalformedVersionFileException x)
+                {
+                    WriteError($"{row.Name}: exception thrown, please manually check for updates");
+                    if (Globals.VERBOSE_FLAG)
+                    {
+                        WriteError($"{e.GetType()}");
+                    }
+                    continue;
+
+                }
+
+                if (UpdateAgent.CompareModVersions(row.VersionInfo, remoteInfo))
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"UPDATE AVAILABLE: {row.Name} - local {row.VersionInfo.ModVersion.ToString()}, remote {remoteInfo.ModVersion.ToString()}");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion.ToString()}, remote {remoteInfo.ModVersion.ToString()}");
+                }
+            }            
+
         }
 
-        public static List<ModDataRow> fillModDataTable(string path, bool verbose)
+        public static List<ModDataRow> FillModDataTable(string path)
         {
             List<ModDataRow> modDataTable = new List<ModDataRow>();
 
-            foreach (DirectoryInfo item in (GetModList(path, verbose)))
+            foreach (DirectoryInfo item in (GetModList(path)))
             {
                 modDataTable.Add(new ModDataRow(item));
             }
 
             foreach (ModDataRow row in modDataTable)
             {
-                row.ModInfo = JsonParser.GetModInfo(row.ModDirectory, verbose);
+                row.ModInfo = JsonParser.GetModInfo(row.ModDirectory);
                 row.Name = row.ModInfo.Name;
                 try
                 {
-                    row.VersionInfo = JsonParser.GetVersionInfo(row.ModDirectory, verbose);
+                    row.VersionInfo = JsonParser.GetVersionInfo(row.ModDirectory);
                 }
                 catch (VersionNotSupportedException e)
                 {
@@ -111,9 +178,9 @@ namespace Starsector_Mod_Manager
 
         // This function accepts a path containing mod folders (typically Starsector installation directory\mods)
         // returns a list of subfolders (because we're not working with JSON yet)
-        public static List<DirectoryInfo> GetModList(string path, bool verbose)
+        public static List<DirectoryInfo> GetModList(string path)
         {
-            if (Directory.Exists(path) == false)
+            if (!Directory.Exists(path))
             {
                 // Look at constructors for this exception
                 throw new DirectoryNotFoundException($"Path {path} does not exist or is null.");
@@ -126,6 +193,18 @@ namespace Starsector_Mod_Manager
                 modDirectoryInfoList.Add(new DirectoryInfo(item));
             }
             return modDirectoryInfoList;
+        }
+        public static void WriteVerbose(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Main: {message}");
+            Console.ResetColor();
+        }
+        public static void WriteError(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine($"Main: {message}");
+            Console.ResetColor();
         }
     }
 }

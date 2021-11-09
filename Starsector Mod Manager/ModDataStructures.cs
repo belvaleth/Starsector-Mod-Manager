@@ -66,8 +66,8 @@ namespace Starsector_Mod_Manager
     {
         public string Major { get; set; }
         public string Minor { get; set; }
-        public object Patch { get; set; }
-        public ModVersion(string major, string minor, object patch)
+        public string Patch { get; set; }
+        public ModVersion(string major, string minor, string patch)
         {
             this.Major = major;
             this.Minor = minor;
@@ -93,6 +93,27 @@ namespace Starsector_Mod_Manager
         {
             this.UnsupportedMod = mod;
             this.VersionFilesFound = versionFilesFound;
+        }
+    }
+    public class MalformedVersionFileException : System.Exception
+    {
+        public string UnsupportedMod { get; }
+        public bool IsNull { get; }
+        
+        public MalformedVersionFileException(string mod, bool isNull)
+        {
+            this.UnsupportedMod = mod;
+            this.IsNull = isNull;
+        }
+        public MalformedVersionFileException(string mod, bool isNull, string message) : base(message)
+        {
+            this.UnsupportedMod = mod;
+            this.IsNull = isNull;
+        }
+        public MalformedVersionFileException(string mod, bool isNull, string message, Exception innerException) : base(message,innerException)
+        {
+            this.UnsupportedMod = mod;
+            this.IsNull = isNull;
         }
     }
 }
