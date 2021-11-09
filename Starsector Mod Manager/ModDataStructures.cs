@@ -16,6 +16,7 @@ namespace Starsector_Mod_Manager
             this.ModFolder = installFolder + Path.DirectorySeparatorChar + "mods";
         }
     }
+
     class ModDataRow
     {
         public string Name { get; set; }
@@ -26,8 +27,8 @@ namespace Starsector_Mod_Manager
         {
             this.ModDirectory = modDirectory;
         }
-        
     }
+
     public class ModInfo
     {
         public string Id { get; set; }
@@ -39,12 +40,14 @@ namespace Starsector_Mod_Manager
         public List<ModDependency> Dependencies { get; set; }
         public FileInfo VersionFile { get; set; }
     }
+
     public class ModDependency
     {
         public string Id { get; set; }
         public string Name { get; set; }
         public string Version { get; set; }
     }
+
     public class ModVersionInfo
     {
         public string MasterVersionFile { get; set; }
@@ -58,6 +61,7 @@ namespace Starsector_Mod_Manager
             this.ModName = modName;
         }
     }
+
     public class ModVersion
     {
         public string Major { get; set; }
@@ -75,6 +79,7 @@ namespace Starsector_Mod_Manager
             return versionString;
         }
     }
+
     public class VersionNotSupportedException : System.Exception
     {
         public string UnsupportedMod { get; }
