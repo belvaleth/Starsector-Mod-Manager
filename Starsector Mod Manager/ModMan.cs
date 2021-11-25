@@ -22,24 +22,21 @@ namespace Starsector_Mod_Manager
 
             Option pathOption = new Option<string>("--path", description: "The Starsector install directory");
             pathOption.AddAlias("-p");
-            Option checkForUpdatesOption = new Option<bool>("--checkforupdates", description: "Check for mod updates, but do not download");
-            checkForUpdatesOption.AddAlias("-c");
             Option updateOption = new Option<bool>("--update", description: "Update mods with available updates. Implies --checkforupdates");
             updateOption.AddAlias("-u");
             Option verboseOption = new Option<bool>("--verbose", "Enables verbose output");
             verboseOption.AddAlias("-v");
 
             rootCommand.AddOption(pathOption);
-            rootCommand.AddOption(checkForUpdatesOption);
             rootCommand.AddOption(updateOption);
             rootCommand.AddOption(verboseOption);
 
-            rootCommand.Handler = CommandHandler.Create<string, bool, bool, bool>(CommandProcessor);
+            rootCommand.Handler = CommandHandler.Create<string, bool, bool>(CommandProcessor);
 
             return rootCommand.Invoke(args);
         }
 
-        static void CommandProcessor(string path, bool checkforupdates, bool update, bool verbose)
+        static void CommandProcessor(string path, bool update, bool verbose)
         {
             if (verbose)
             {
@@ -61,22 +58,10 @@ namespace Starsector_Mod_Manager
             {
                 throw new DirectoryNotFoundException($"User defined path {path} does not exist.");
             }
-            if (checkforupdates && update)
-            {
-                WriteVerbose("\nNote: --update implies --checkforupdates.\n");
-            }
-            if (Globals.VERBOSE_FLAG)
-            {
-                WriteVerbose("Verbose output enabled.");
-            }
+            WriteVerbose("Verbose output enabled.");
 
-
-            if (Globals.VERBOSE_FLAG)
-            {
-                WriteVerbose($"Path: {path}");
-                WriteVerbose($"Check for updates: {checkforupdates}");
-                WriteVerbose($"Update: {update}");
-            }
+            WriteVerbose($"Path: {path}");
+            WriteVerbose($"Update: {update}");
 
             List<ModDataRow> modDataTable = FillModDataTable(path);
 
@@ -85,11 +70,12 @@ namespace Starsector_Mod_Manager
                 ModVersionInfo remoteInfo;
                 if (row.VersionInfo.ModVersion.Major.Equals("UNSUPPORTED"))
                 {
+                    Console.WriteLine($"{row.Name}: local: {row.ModInfo.Version} (No version file)");
                     continue;
                 }
                 try
                 {
-                remoteInfo = (UpdateAgent.GetRemoteVersionInfo(row)).Result;
+                    remoteInfo = (UpdateAgent.GetRemoteVersionInfo(row)).Result;
                 }
                 catch (MalformedVersionFileException e)
                 {
@@ -196,9 +182,12 @@ namespace Starsector_Mod_Manager
         }
         public static void WriteVerbose(string message)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"Main: {message}");
-            Console.ResetColor();
+            if (Globals.VERBOSE_FLAG)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Main: {message}");
+                Console.ResetColor();
+            }
         }
         public static void WriteError(string message)
         {

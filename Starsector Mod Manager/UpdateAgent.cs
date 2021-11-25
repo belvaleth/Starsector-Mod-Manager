@@ -16,31 +16,40 @@ namespace Starsector_Mod_Manager
             {
                 throw new MalformedVersionFileException(modData.Name, true, $"Remote master version file for {modData.Name} is null!");
             }
-            if (Globals.VERBOSE_FLAG)
+            WriteVerbose($"Getting remote version info for {modData.Name}");
+            Regex remoteRawVersionURL = new Regex(".*\\.version$");
+            Regex dropboxDLCheck = new Regex("^https:\\/\\/www\\.dropbox\\.com.*dl=0$");
+
+            string requestURL = modData.VersionInfo.MasterVersionFile;
+
+            if (dropboxDLCheck.IsMatch(modData.VersionInfo.MasterVersionFile))
             {
-                WriteVerbose($"Getting remote version info for {modData.Name}");
+                requestURL = requestURL.Replace("dl=0", "dl=1");
             }
-            Regex remoteURL = new Regex(".*\\.version$");
 
 
-            //TODO: implement downloading of non-raw remote version files
+            HttpResponseMessage remoteVersionResponse = new HttpResponseMessage();
+            string responseContent;
 
-            if (!remoteURL.IsMatch(modData.VersionInfo.MasterVersionFile))
+            try
             {
-                var response = UpdateClient.GetAsync(modData.VersionInfo.MasterVersionFile).Result;
-                while (response.StatusCode != System.Net.HttpStatusCode.OK)
-                {
-                    response = UpdateClient.GetAsync(response.Headers.Location).Result;
-                }
-
-                throw new MalformedVersionFileException(modData.Name, false);
+                remoteVersionResponse = await UpdateClient.GetAsync(requestURL);
             }
-            HttpResponseMessage remoteVersionResponse = await UpdateClient.GetAsync(modData.VersionInfo.MasterVersionFile);
-            if (!remoteVersionResponse.IsSuccessStatusCode)
+            catch
             {
-                throw new HttpRequestException($"Failed to retrieve remote master version file for mod {modData.Name}, located at {modData.VersionInfo.MasterVersionFile} (response {remoteVersionResponse.StatusCode})");
+                WriteError($"Failed to retrieve remote master version file for mod {modData.Name}, located at {requestURL} (response {remoteVersionResponse.StatusCode})");
             }
-            string responseContent = remoteVersionResponse.Content.ReadAsStringAsync().Result;
+
+            if (remoteRawVersionURL.IsMatch(requestURL))
+            {
+                responseContent = remoteVersionResponse.Content.ReadAsStringAsync().Result;
+            }
+            else
+            {
+                byte[] contentByteArray = remoteVersionResponse.Content.ReadAsByteArrayAsync().Result;
+                responseContent = System.Text.Encoding.ASCII.GetString(contentByteArray);
+            }
+
             string remoteMasterVersionJson = JsonParser.CleanJson(responseContent);
 
             ModVersionInfo remoteMasterVersionInfo = JsonParser.ParseRemoteVersionInfo(remoteMasterVersionJson);
@@ -88,9 +97,12 @@ namespace Starsector_Mod_Manager
 
         public static void WriteVerbose(string message)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"Update Agent: {message}");
-            Console.ResetColor();
+            if (Globals.VERBOSE_FLAG)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Update Agent: {message}");
+                Console.ResetColor();
+            }
         }
         public static void WriteError(string message)
         {
@@ -98,8 +110,5 @@ namespace Starsector_Mod_Manager
             Console.Error.WriteLine($"Update Agent: {message}");
             Console.ResetColor();
         }
-        // function: download remote version
-        // function: unpack archive
-
     }
 }
