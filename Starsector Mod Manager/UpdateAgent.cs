@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace Starsector_Mod_Manager
 {
@@ -38,6 +38,7 @@ namespace Starsector_Mod_Manager
             catch
             {
                 WriteError($"Failed to retrieve remote master version file for mod {modData.Name}, located at {requestURL} (response {remoteVersionResponse.StatusCode})");
+                throw;
             }
 
             if (remoteRawVersionURL.IsMatch(requestURL))
@@ -93,6 +94,16 @@ namespace Starsector_Mod_Manager
             {
                 return false;
             }
+        }
+
+        public static string GetModThread(string threadID)
+        {
+            string baseURL = "https://fractalsoftworks.com/forum/index.php?topic=";
+            StringBuilder urlBuilder = new StringBuilder("\"");
+            urlBuilder.Append(String.Concat(baseURL, threadID));
+            urlBuilder.Append("\"");
+            string modURL = urlBuilder.ToString();
+            return modURL;
         }
 
         public static void WriteVerbose(string message)

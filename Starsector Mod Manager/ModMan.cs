@@ -10,6 +10,7 @@ namespace Starsector_Mod_Manager
     public static class Globals
     {
         public static bool VERBOSE_FLAG = false;
+        public static bool UPDATE_FLAG = false;
     }
     class ModMan
     {
@@ -22,7 +23,7 @@ namespace Starsector_Mod_Manager
 
             Option pathOption = new Option<string>("--path", description: "The Starsector install directory");
             pathOption.AddAlias("-p");
-            Option updateOption = new Option<bool>("--update", description: "Update mods with available updates. Implies --checkforupdates");
+            Option updateOption = new Option<bool>("--update", description: "Update mods with available updates.");
             updateOption.AddAlias("-u");
             Option verboseOption = new Option<bool>("--verbose", "Enables verbose output");
             verboseOption.AddAlias("-v");
@@ -117,6 +118,11 @@ namespace Starsector_Mod_Manager
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine($"UPDATE AVAILABLE: {row.Name} - local {row.VersionInfo.ModVersion.ToString()}, remote {remoteInfo.ModVersion.ToString()}");
                     Console.ResetColor();
+                    if (update)
+                    {
+                        string modURL = UpdateAgent.GetModThread(row.VersionInfo.ModThreadID);
+                        System.Diagnostics.Process.Start("explorer", modURL);
+                    }
                 }
                 else
                 {
