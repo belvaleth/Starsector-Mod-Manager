@@ -13,7 +13,7 @@ namespace Starsector_Mod_Manager
     }
     class ModMan
     {
-        public static string modManVersion = "v1.0.0";
+        public static string modManVersion = "v1.0.1";
         static int Main(string[] args)
         {
             RootCommand rootCommand = new RootCommand
@@ -23,6 +23,7 @@ namespace Starsector_Mod_Manager
 
             Option pathOption = new Option<string>("--path", description: "The Starsector install directory");
             pathOption.AddAlias("-p");
+            pathOption.IsRequired = true;
             Option updateOption = new Option<bool>("--update", description: "Update mods with available updates.");
             updateOption.AddAlias("-u");
             Option verboseOption = new Option<bool>("--verbose", "Enables verbose output");
@@ -43,10 +44,6 @@ namespace Starsector_Mod_Manager
             {
                 Globals.VERBOSE_FLAG = true;
             }
-            if (path == null)
-            {
-                throw new DirectoryNotFoundException($"No path provided.");
-            }
             if (path.EndsWith(Path.DirectorySeparatorChar))
             {
                 path = path.Remove(path.LastIndexOf(Path.DirectorySeparatorChar));
@@ -57,8 +54,21 @@ namespace Starsector_Mod_Manager
             }
             if (!Directory.Exists(path))
             {
-                throw new DirectoryNotFoundException($"User defined path {path} does not exist.");
+                WriteError($"User defined path ({path}) does not exist.");
+                Environment.Exit(1);
             }
+            if (!File.Exists($"{path}{Path.DirectorySeparatorChar}Starsector.exe"))
+            {
+                WriteError($"The directory selected ({path}) is not a valid Starsector installation directory");
+                Environment.Exit(1);
+            }
+            if (!Directory.Exists($"{path}{Path.DirectorySeparatorChar}mods"))
+            {
+                WriteError($"User defined path ({path}) contains Starsector.exe, but the mods subfolder does not exist");
+                Environment.Exit(1);
+            }
+
+
             WriteVerbose("Verbose output enabled.");
 
             WriteVerbose($"Path: {path}");
@@ -120,8 +130,15 @@ namespace Starsector_Mod_Manager
                     Console.ResetColor();
                     if (update)
                     {
-                        string modURL = UpdateAgent.GetModThread(row.VersionInfo.ModThreadID);
-                        System.Diagnostics.Process.Start("explorer", modURL);
+                        if (row.VersionInfo.ModThreadID != null)
+                        {
+                            string modURL = UpdateAgent.GetModThread(row.VersionInfo.ModThreadID);
+                            System.Diagnostics.Process.Start("explorer", modURL);
+                        }
+                        else
+                        {
+                            WriteError($"Update found for {row.Name} but no threadID exists in local .version file. Please update manually.");
+                        }
                     }
                 }
                 else
@@ -136,6 +153,11 @@ namespace Starsector_Mod_Manager
         {
             List<ModDataRow> modDataTable = new List<ModDataRow>();
 
+            if (GetModList(path) == null)
+            {
+                Console.WriteLine("No mods found!");
+                Environment.Exit(1);
+            }
             foreach (DirectoryInfo item in (GetModList(path)))
             {
                 modDataTable.Add(new ModDataRow(item));
@@ -178,10 +200,13 @@ namespace Starsector_Mod_Manager
         {
             if (!Directory.Exists(path))
             {
-                // Look at constructors for this exception
                 throw new DirectoryNotFoundException($"Path {path} does not exist or is null.");
             }
             List<string> modDirectories = (Directory.EnumerateDirectories(path + Path.DirectorySeparatorChar + "mods")).ToList();
+            if (modDirectories.Count < 1)
+            {
+                return null;
+            }
 
             List<DirectoryInfo> modDirectoryInfoList = new List<DirectoryInfo>();
             foreach (string item in modDirectories)
