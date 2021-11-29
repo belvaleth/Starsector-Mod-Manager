@@ -10,16 +10,16 @@ namespace Starsector_Mod_Manager
     public static class Globals
     {
         public static bool VERBOSE_FLAG = false;
-        public static bool UPDATE_FLAG = false;
     }
     class ModMan
     {
-        public static string modManVersion = "v0.0.1";
+        public static string modManVersion = "v1.0.0";
         static int Main(string[] args)
         {
-            RootCommand rootCommand = new RootCommand();
-
-            rootCommand.Description = ("Starsector Mod Manager " + modManVersion);
+            RootCommand rootCommand = new RootCommand
+            {
+                Description = ("Starsector Mod Manager " + modManVersion)
+            };
 
             Option pathOption = new Option<string>("--path", description: "The Starsector install directory");
             pathOption.AddAlias("-p");
@@ -102,7 +102,7 @@ namespace Starsector_Mod_Manager
                     }
                     continue;
                 }
-                catch (AggregateException e) when (e.InnerException is not MalformedVersionFileException x)
+                catch (AggregateException e) when (e.InnerException is not MalformedVersionFileException)
                 {
                     WriteError($"{row.Name}: exception thrown, please manually check for updates");
                     if (Globals.VERBOSE_FLAG)
@@ -116,7 +116,7 @@ namespace Starsector_Mod_Manager
                 if (UpdateAgent.CompareModVersions(row.VersionInfo, remoteInfo))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"UPDATE AVAILABLE: {row.Name} - local {row.VersionInfo.ModVersion.ToString()}, remote {remoteInfo.ModVersion.ToString()}");
+                    Console.WriteLine($"UPDATE AVAILABLE: {row.Name} - local {row.VersionInfo.ModVersion}, remote {remoteInfo.ModVersion}");
                     Console.ResetColor();
                     if (update)
                     {
@@ -126,7 +126,7 @@ namespace Starsector_Mod_Manager
                 }
                 else
                 {
-                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion.ToString()}, remote {remoteInfo.ModVersion.ToString()}");
+                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, remote {remoteInfo.ModVersion}");
                 }
             }            
 
@@ -154,14 +154,18 @@ namespace Starsector_Mod_Manager
                     if (e.VersionFilesFound == 0)
                     {
                         Console.WriteLine($"No version file found for mod: {row.Name}");
-                        row.VersionInfo = new ModVersionInfo(row.Name);
-                        row.VersionInfo.ModVersion = new ModVersion("UNSUPPORTED", "0", "0");
+                        row.VersionInfo = new ModVersionInfo(row.Name)
+                        {
+                            ModVersion = new ModVersion("UNSUPPORTED", "0", "0")
+                        };
                     }
                     if (e.VersionFilesFound > 1)
                     {
                         Console.WriteLine($"Multiple version files found for mod: {row.Name}!");
-                        row.VersionInfo = new ModVersionInfo(row.Name);
-                        row.VersionInfo.ModVersion = new ModVersion("UNSUPPORTED", "0", e.VersionFilesFound.ToString());
+                        row.VersionInfo = new ModVersionInfo(row.Name)
+                        {
+                            ModVersion = new ModVersion("UNSUPPORTED", "0", e.VersionFilesFound.ToString())
+                        };
                     }
                 }
             }

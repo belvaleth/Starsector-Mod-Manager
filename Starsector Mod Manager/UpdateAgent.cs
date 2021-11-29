@@ -101,7 +101,7 @@ namespace Starsector_Mod_Manager
             string baseURL = "https://fractalsoftworks.com/forum/index.php?topic=";
             StringBuilder urlBuilder = new StringBuilder("\"");
             urlBuilder.Append(String.Concat(baseURL, threadID));
-            urlBuilder.Append("\"");
+            urlBuilder.Append('"');
             string modURL = urlBuilder.ToString();
             return modURL;
         }
