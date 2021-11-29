@@ -1,4 +1,4 @@
-﻿## A CLI based mod manager for Starsector.
+﻿## A CLI based mod manager for Starsector
 
 #### Usage:
 
