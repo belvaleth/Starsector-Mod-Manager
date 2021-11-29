@@ -13,14 +13,14 @@ namespace Starsector_Mod_Manager
     }
     class ModMan
     {
-        public static string modManVersion = "v1.0.1";
+        public static string modManVersion = "v1.0.2";
         static int Main(string[] args)
         {
             RootCommand rootCommand = new RootCommand
             {
                 Description = ("Starsector Mod Manager " + modManVersion)
             };
-
+           
             Option pathOption = new Option<string>("--path", description: "The Starsector install directory");
             pathOption.AddAlias("-p");
             pathOption.IsRequired = true;
@@ -67,7 +67,6 @@ namespace Starsector_Mod_Manager
                 WriteError($"User defined path ({path}) contains Starsector.exe, but the mods subfolder does not exist");
                 Environment.Exit(1);
             }
-
 
             WriteVerbose("Verbose output enabled.");
 
