@@ -116,15 +116,4 @@ namespace Starsector_Mod_Manager
             this.IsNull = isNull;
         }
     }
-    public class InvalidComparisonException : System.Exception
-    {
-        public string arg1 { get; }
-        public string arg2 { get; }
-
-        public InvalidComparisonException(string arg1, string arg2)
-        {
-            this.arg1 = arg1;
-            this.arg2 = arg2;
-        }
-    }
 }

@@ -111,7 +111,13 @@ namespace Starsector_Mod_Manager
 
                 if (splitA.Count != splitB.Count)
                 {
-                    throw new InvalidOperationException("");
+                    int higherCount = splitA.Count >= splitB.Count ? splitA.Count : splitB.Count;
+                    int lowerCount = splitA.Count >= splitB.Count ? splitB.Count : splitA.Count;
+                    for (int i = lowerCount; i < higherCount; i++)
+                    {
+                        splitA[i] = splitA[i] != null ? splitA[i] : String.Empty;
+                        splitB[i] = splitB[i] != null ? splitB[i] : String.Empty;
+                    }  
                 }
 
                 for(int i=0;i<splitA.Count;i++)
