@@ -29,7 +29,6 @@ namespace Starsector_Mod_Manager
                 requestURL = requestURL.Replace("dl=0", "dl=1");
             }
 
-
             HttpResponseMessage remoteVersionResponse = new HttpResponseMessage();
             string responseContent;
 
@@ -60,7 +59,6 @@ namespace Starsector_Mod_Manager
         }
 
         // get remote version file, compare to local. Return true if remote has higher version
-       
         public static bool CompareModVersions(ModVersionInfo local, ModVersionInfo remote)
         {
             static bool CompareSubVersions(string a, string b)
@@ -79,9 +77,9 @@ namespace Starsector_Mod_Manager
                 }
                 // Case 3: one or both strings contain a mix of numbers and letters
                 
-                List<string?> splitA = new List<string?>();
+                List<string> splitA = new List<string>();
                 
-                string? remainder = a;
+                string remainder = a;
                 do
                 {
                     try
@@ -94,7 +92,7 @@ namespace Starsector_Mod_Manager
                     }
                 } while (remainder != null);
 
-                List<string?> splitB = new List<string?>();
+                List<string> splitB = new List<string>();
 
                 remainder = b;
                 do
@@ -167,15 +165,13 @@ namespace Starsector_Mod_Manager
             {
                 throw;
             }
-            
-
         }
 
-        public static string? ParseVersionSubstring(string input, out string? remainder)
+        public static string ParseVersionSubstring(string input, out string remainder)
         {
             if (Char.IsDigit(input[0]))
             {
-                string? split = new String(input.TakeWhile(Char.IsDigit).ToArray());
+                string split = new String(input.TakeWhile(Char.IsDigit).ToArray());
                 if (Regex.IsMatch(input, "[a-zA-Z]+"))
                 {
                     remainder = input.Substring(Regex.Match(input, "[a-zA-Z]+").Index);
@@ -188,7 +184,7 @@ namespace Starsector_Mod_Manager
             }
             else if (Char.IsLetter(input[0]))
             {
-                string? split = new String(input.TakeWhile(Char.IsLetter).ToArray());
+                string split = new String(input.TakeWhile(Char.IsLetter).ToArray());
                 if (Regex.IsMatch(input, "\\d+"))
                 {
                     remainder = input.Substring(Regex.Match(input, "\\d+").Index);
@@ -202,9 +198,7 @@ namespace Starsector_Mod_Manager
             else
             {
                 throw new InvalidOperationException("Attempted to parse version substring containing non-alphanumeric characters");
-            }
-
-            
+            }  
         }
 
         // Case 2: one or both strings contain non-alphanumeric characters
@@ -222,8 +216,6 @@ namespace Starsector_Mod_Manager
             return builder.ToString();
         }
 
-
-
         public static string GetModThread(string threadID)
         {
             string baseURL = "https://fractalsoftworks.com/forum/index.php?topic=";
@@ -234,7 +226,6 @@ namespace Starsector_Mod_Manager
             return modURL;
         }
 
-
         public static void WriteVerbose(string message)
         {
             if (Globals.VERBOSE_FLAG)
@@ -244,6 +235,7 @@ namespace Starsector_Mod_Manager
                 Console.ResetColor();
             }
         }
+
         public static void WriteError(string message)
         {
             Console.ForegroundColor = ConsoleColor.Red;

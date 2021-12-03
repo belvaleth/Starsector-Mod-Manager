@@ -9,13 +9,11 @@ namespace Starsector_Mod_Manager
 {
     class JsonParser
     {
-
-        // This function accepts a folder name and returns an object representation of mod_info.json
+        // This function accepts a folder and returns an object representation of mod_info.json
         public static ModInfo GetModInfo(DirectoryInfo path)
         {
             if (!path.Exists)
             {
-                // Look at constructors for this exception
                 throw new DirectoryNotFoundException();
             }
 
@@ -38,7 +36,6 @@ namespace Starsector_Mod_Manager
         {
             if (!path.Exists)
             {
-                // Look at constructors for this exception
                 throw new DirectoryNotFoundException();
             }
             List<FileInfo> versionFileListing = (path.EnumerateFiles("*.version", SearchOption.AllDirectories)).ToList();
@@ -79,9 +76,7 @@ namespace Starsector_Mod_Manager
             return versionInfo;
         }
 
-
-
-        // Because no one seems to be able to write standardized JSON.
+        // Standardizes input as something as close to standard JSON as possible
         public static string CleanJson(string jsonInput)
         {
             bool invalidJsonReported = false;
@@ -106,7 +101,6 @@ namespace Starsector_Mod_Manager
             {
                 if (Globals.VERBOSE_FLAG && !invalidJsonReported)
                 {
-                    //Console.WriteLine($"{missingQuotesMatches.Count} Quotes missing!");
                     WriteVerbose("Found invalid JSON, cleaning up...");
                 }
                 foreach (Match match in missingQuotesMatches)
@@ -115,10 +109,6 @@ namespace Starsector_Mod_Manager
                     trimmedValue = trimmedValue.Replace(System.Environment.NewLine, null);
                     trimmedValue = trimmedValue.Trim();
                     string newValue = String.Concat(":\"", trimmedValue, "\"");
-                    /*if (Globals.VERBOSE_FLAG)
-                    {
-                        Console.WriteLine($"Replacing {match.Value} with {newValue}");
-                    }*/
                     Regex test = new Regex($"{match.Value}");
                     jsonOutput = test.Replace(jsonOutput, newValue, 1);
                 }
