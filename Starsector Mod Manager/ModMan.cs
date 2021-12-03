@@ -75,12 +75,17 @@ namespace Starsector_Mod_Manager
 
             List<ModDataRow> modDataTable = FillModDataTable(path);
 
+            Console.WriteLine("\n\n{0,-60}{1,-15}{2,-15}\n", "Mod Name", "Local Version", "Remote Version");
+
             foreach (ModDataRow row in modDataTable)
             {
                 ModVersionInfo remoteInfo;
                 if (row.VersionInfo.ModVersion.Major.Equals("UNSUPPORTED"))
                 {
-                    Console.WriteLine($"{row.Name}: local: {row.ModInfo.Version} (No version file)");
+                    Console.Write($"{row.Name,-60}{row.ModInfo.Version,-15}");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("{0,-15}\n","Unsupported");
+                    Console.ResetColor();
                     continue;
                 }
                 try
@@ -89,13 +94,16 @@ namespace Starsector_Mod_Manager
                 }
                 catch (MalformedVersionFileException e)
                 {
-                    if (e.IsNull)
+                    if (Globals.VERBOSE_FLAG)
                     {
-                        WriteError($"{e.UnsupportedMod}: Remote version file is null");
-                    }
-                    else
-                    {
-                        WriteError($"{e.UnsupportedMod}: Remote version file is not .version file, skipping...");
+                        if (e.IsNull)
+                        {
+                            WriteError($"{e.UnsupportedMod}: Remote version file is null");
+                        }
+                        else
+                        {
+                            WriteError($"{e.UnsupportedMod}: Remote version file is not .version file, skipping...");
+                        }
                     }
                     continue;
                 }
@@ -103,20 +111,38 @@ namespace Starsector_Mod_Manager
                 {
                     if (x.IsNull)
                     {
-                        WriteError($"{row.Name}: remote master version file is null, please manually check for updates");
-                        Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}");
+                        if (Globals.VERBOSE_FLAG)
+                        {
+                            WriteError($"{row.Name}: remote master version file is null, please manually check for updates");
+                        }
+                        Console.Write($"{row.Name,-60}{row.VersionInfo.ModVersion,-15}");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("{0,-15}\n", "???");
+                        Console.ResetColor();
                     }
                     else
                     {
-                        WriteError($"{row.Name}: malformed remote master version file, please manually check for updates");
-                        Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}");
+                        if (Globals.VERBOSE_FLAG)
+                        {
+                            WriteError($"{row.Name}: malformed remote master version file, please manually check for updates");
+                        }
+                        Console.Write($"{row.Name,-60}{row.VersionInfo.ModVersion,-15}");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("{0,-15}\n", "???");
+                        Console.ResetColor();
                     }
                     continue;
                 }
                 catch (AggregateException e) when (e.InnerException is not MalformedVersionFileException)
                 {
-                    WriteError($"{row.Name}: exception thrown, please manually check for updates");
-                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, error getting remote version file");
+                    if (Globals.VERBOSE_FLAG)
+                    {
+                        WriteError($"{row.Name}: exception thrown, please manually check for updates");
+                    }
+                    Console.Write($"{row.Name,-60}{row.VersionInfo.ModVersion,-15}");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("{0,-15}\n", "???");
+                    Console.ResetColor();
                     continue;
                 }
 
@@ -126,8 +152,13 @@ namespace Starsector_Mod_Manager
                 }
                 catch (InvalidOperationException e)
                 {
-                    WriteError($"{row.Name}: exception thrown, please manually check for updates");
-                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, remote {remoteInfo.ModVersion}");
+                    if (Globals.VERBOSE_FLAG)
+                    {
+                        WriteError($"{row.Name}: exception thrown, please manually check for updates");
+                    }
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"{row.Name,-60}{row.VersionInfo.ModVersion,-15}{remoteInfo.ModVersion,-15}");
+                    Console.ResetColor();
                     if (Globals.VERBOSE_FLAG)
                     {
                         WriteError($"{e.Message}");
@@ -136,8 +167,9 @@ namespace Starsector_Mod_Manager
                 }
                 if (UpdateAgent.CompareModVersions(row.VersionInfo, remoteInfo))
                 {
+                    Console.Write($"{row.Name,-60}{row.VersionInfo.ModVersion,-15}");
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"UPDATE AVAILABLE: {row.Name} - local {row.VersionInfo.ModVersion}, remote {remoteInfo.ModVersion}");
+                    Console.Write($"{remoteInfo.ModVersion,-15}\n");
                     Console.ResetColor();
                     if (update)
                     {
@@ -148,15 +180,19 @@ namespace Starsector_Mod_Manager
                         }
                         else
                         {
-                            WriteError($"Update found for {row.Name} but no threadID exists in local .version file. Please update manually.");
+                            if (Globals.VERBOSE_FLAG)
+                            {
+                                WriteError($"Update found for {row.Name} but no threadID exists in local .version file. Please update manually.");
+                            }
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, remote {remoteInfo.ModVersion}");
+                    Console.WriteLine($"{row.Name,-60}{row.VersionInfo.ModVersion,-15}{remoteInfo.ModVersion,-15}");
                 }
-            }            
+            }
+            Console.Write("\n\n");
 
         }
 
@@ -186,7 +222,7 @@ namespace Starsector_Mod_Manager
                 {
                     if (e.VersionFilesFound == 0)
                     {
-                        Console.WriteLine($"No version file found for mod: {row.Name}");
+                        //Console.WriteLine($"No version file found for mod: {row.Name}");
                         row.VersionInfo = new ModVersionInfo(row.Name)
                         {
                             ModVersion = new ModVersion("UNSUPPORTED", "0", "0")
