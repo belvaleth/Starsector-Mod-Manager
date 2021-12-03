@@ -104,16 +104,19 @@ namespace Starsector_Mod_Manager
                     if (x.IsNull)
                     {
                         WriteError($"{row.Name}: remote master version file is null, please manually check for updates");
+                        Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}");
                     }
                     else
                     {
                         WriteError($"{row.Name}: malformed remote master version file, please manually check for updates");
+                        Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}");
                     }
                     continue;
                 }
                 catch (AggregateException e) when (e.InnerException is not MalformedVersionFileException)
                 {
                     WriteError($"{row.Name}: exception thrown, please manually check for updates");
+                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, error getting remote version file");
                     if (Globals.VERBOSE_FLAG)
                     {
                         WriteError($"{e.GetType()}");
@@ -121,7 +124,21 @@ namespace Starsector_Mod_Manager
                     continue;
 
                 }
-
+                WriteVerbose("Starting comparison...");
+                try
+                {
+                    UpdateAgent.CompareModVersions(row.VersionInfo, remoteInfo);
+                }
+                catch (InvalidOperationException e)
+                {
+                    WriteError($"{row.Name}: exception thrown, please manually check for updates");
+                    Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, remote {remoteInfo.ModVersion}");
+                    if (Globals.VERBOSE_FLAG)
+                    {
+                        WriteError($"{e.Message}");
+                    }
+                    continue;
+                }
                 if (UpdateAgent.CompareModVersions(row.VersionInfo, remoteInfo))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;

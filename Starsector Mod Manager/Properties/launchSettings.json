@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Starsector Mod Manager": {
+      "commandName": "Project",
+      "commandLineArgs": "-p N:\\Starsector -v"
+    }
+  }
+}

@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Starsector_Mod_Manager
 {
@@ -58,43 +60,163 @@ namespace Starsector_Mod_Manager
         }
 
         // get remote version file, compare to local. Return true if remote has higher version
+       
         public static bool CompareModVersions(ModVersionInfo local, ModVersionInfo remote)
         {
-            int majorCheck = String.Compare(local.ModVersion.Major, remote.ModVersion.Major);
-
-            if (majorCheck == -1)
+            static bool CompareSubVersions(string a, string b)
             {
-                return true;
-            }
-            else if (majorCheck == 0)
-            {
-                int minorCheck = String.Compare(local.ModVersion.Minor, remote.ModVersion.Minor);
-                if (minorCheck == -1)
+                // Case 1: both strings only contain letters
+                Regex lettersOnly = new Regex("^[a-zA-Z]+$");
+                Regex numbersOnly = new Regex("^[\\d]+$");
+                if (lettersOnly.IsMatch(a) && lettersOnly.IsMatch(b))
                 {
-                    return true;
+                    return (String.Compare(a, b) == -1) ? true : false;
                 }
-                else if (minorCheck == 0)
+                // Case 2: both strings only contain numbers
+                if (numbersOnly.IsMatch(a) && numbersOnly.IsMatch(b))
                 {
-                    int patchCheck = String.Compare(local.ModVersion.Patch, remote.ModVersion.Patch);
-                    if (patchCheck == -1)
+                    return Int32.Parse(b) > Int32.Parse(a) ? true : false;
+                }
+                // Case 3: one or both strings contain a mix of numbers and letters
+                
+                List<string?> splitA = new List<string?>();
+                
+                string? remainder = a;
+                do
+                {
+                    try
                     {
-                        return true;
+                        splitA.Add(ParseVersionSubstring(remainder, out remainder));
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                } while (remainder != null);
+
+                List<string?> splitB = new List<string?>();
+
+                remainder = b;
+                do
+                {
+                    try
+                    {
+                        splitB.Add(ParseVersionSubstring(remainder, out remainder));
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                } while (remainder != null);
+
+                if (splitA.Count != splitB.Count)
+                {
+                    throw new InvalidOperationException("");
+                }
+
+                for(int i=0;i<splitA.Count;i++)
+                {
+                    if (numbersOnly.IsMatch(splitA[i]) && (numbersOnly.IsMatch(splitB[i])))
+                    {
+                        if (Int32.Parse(splitB[i]) > Int32.Parse(splitA[i]))
+                        {
+                            return true;
+                        }
+                    }
+                    else if (lettersOnly.IsMatch(splitA[i]) && (lettersOnly.IsMatch(splitB[i])))
+                    {
+                        if (String.Compare(splitA[i],splitB[i]) == -1)
+                        {
+                            return true;
+                        }
                     }
                     else
                     {
-                        return false;
+                        throw new InvalidOperationException($"Attempted to compare a string and an integer! {splitA[i]}, {splitB[i]}");
                     }
+                }
+                return false;
+            }
+
+            try
+            {
+                if (CompareSubVersions(local.ModVersion.Major, remote.ModVersion.Major))
+                {
+                    return true;
+                }
+                else if (CompareSubVersions(local.ModVersion.Minor, remote.ModVersion.Minor))
+                {
+                    return true;
+                }
+                else if (CompareSubVersions(local.ModVersion.Patch, remote.ModVersion.Patch))
+                {
+                    return true;
                 }
                 else
                 {
                     return false;
                 }
             }
+            catch (InvalidOperationException)
+            {
+                throw;
+            }
+            
+
+        }
+
+        public static string? ParseVersionSubstring(string input, out string? remainder)
+        {
+            if (Char.IsDigit(input[0]))
+            {
+                string? split = new String(input.TakeWhile(Char.IsDigit).ToArray());
+                if (Regex.IsMatch(input, "[a-zA-Z]+"))
+                {
+                    remainder = input.Substring(Regex.Match(input, "[a-zA-Z]+").Index);
+                }
+                else
+                {
+                    remainder = null;
+                }
+                return split;
+            }
+            else if (Char.IsLetter(input[0]))
+            {
+                string? split = new String(input.TakeWhile(Char.IsLetter).ToArray());
+                if (Regex.IsMatch(input, "\\d+"))
+                {
+                    remainder = input.Substring(Regex.Match(input, "\\d+").Index);
+                }
+                else
+                {
+                    remainder = null;
+                }
+                return split;
+            }
             else
             {
-                return false;
+                throw new InvalidOperationException("Attempted to parse version substring containing non-alphanumeric characters");
             }
+
+            
         }
+
+        // Case 2: one or both strings contain non-alphanumeric characters
+        public static string RemoveNonAlphanumeric(string input)
+        {
+            StringBuilder builder = new StringBuilder(input);
+            Regex nonAlphanumberic = new Regex("[^0-9a-zA-Z]+");
+            if (nonAlphanumberic.IsMatch(builder.ToString()))
+            {
+                foreach (Match match in nonAlphanumberic.Matches(builder.ToString()))
+                {
+                    builder.Replace(match.Value, "");
+                }
+            }
+            return builder.ToString();
+        }
+
+
 
         public static string GetModThread(string threadID)
         {
@@ -105,6 +227,7 @@ namespace Starsector_Mod_Manager
             string modURL = urlBuilder.ToString();
             return modURL;
         }
+
 
         public static void WriteVerbose(string message)
         {
