@@ -117,14 +117,9 @@ namespace Starsector_Mod_Manager
                 {
                     WriteError($"{row.Name}: exception thrown, please manually check for updates");
                     Console.WriteLine($"{row.Name}: local {row.VersionInfo.ModVersion}, error getting remote version file");
-                    if (Globals.VERBOSE_FLAG)
-                    {
-                        WriteError($"{e.GetType()}");
-                    }
                     continue;
-
                 }
-                WriteVerbose("Starting comparison...");
+
                 try
                 {
                     UpdateAgent.CompareModVersions(row.VersionInfo, remoteInfo);
