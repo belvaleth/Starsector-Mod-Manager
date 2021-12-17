@@ -13,7 +13,7 @@ namespace Starsector_Mod_Manager
     }
     class ModMan
     {
-        public static string modManVersion = "v1.2.0";
+        public static string modManVersion = "v1.3.0";
         static int Main(string[] args)
         {
             RootCommand rootCommand = new RootCommand
