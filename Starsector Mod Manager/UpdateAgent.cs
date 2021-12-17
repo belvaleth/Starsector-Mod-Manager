@@ -111,10 +111,25 @@ namespace Starsector_Mod_Manager
                 {
                     int higherCount = splitA.Count >= splitB.Count ? splitA.Count : splitB.Count;
                     int lowerCount = splitA.Count >= splitB.Count ? splitB.Count : splitA.Count;
-                    for (int i = lowerCount; i < higherCount; i++)
+                    for (int i = lowerCount-1; i < higherCount; i++)
                     {
-                        splitA[i] = splitA[i] != null ? splitA[i] : String.Empty;
-                        splitB[i] = splitB[i] != null ? splitB[i] : String.Empty;
+                        try
+                        {
+                            splitA[i] = splitA[i] != null ? splitA[i] : String.Empty;
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            splitA.Add(String.Empty);
+                        }
+                        try
+                        {
+                            splitB[i] = splitB[i] != null ? splitB[i] : String.Empty;
+                        }
+                        catch (ArgumentOutOfRangeException)
+                        {
+                            splitB.Add(String.Empty);
+                        }
+
                     }  
                 }
 
@@ -134,6 +149,12 @@ namespace Starsector_Mod_Manager
                             return true;
                         }
                     }
+
+                    else if (splitA[i] == String.Empty || splitB[i] == String.Empty)
+                    {
+                        return splitB[i] == String.Empty ? false : true;
+                    }
+
                     else
                     {
                         throw new InvalidOperationException($"Attempted to compare a string and an integer! {splitA[i]}, {splitB[i]}");
