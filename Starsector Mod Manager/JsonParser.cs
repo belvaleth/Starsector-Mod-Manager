@@ -49,7 +49,8 @@ namespace Starsector_Mod_Manager
                 ReadCommentHandling = JsonCommentHandling.Skip,
                 AllowTrailingCommas = true,
                 PropertyNameCaseInsensitive = true,
-                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
             };
 
             string jsonString = File.ReadAllText(versionFileListing[0].FullName);

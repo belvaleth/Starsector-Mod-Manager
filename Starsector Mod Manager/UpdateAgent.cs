@@ -63,6 +63,14 @@ namespace Starsector_Mod_Manager
         {
             static bool CompareSubVersions(string a, string b)
             {
+                if (String.IsNullOrEmpty(a))
+                {
+                    a = "0";
+                }
+                if (String.IsNullOrEmpty(b))
+                {
+                    b = "0";
+                }
                 // Case 1: both strings only contain letters
                 Regex lettersOnly = new Regex("^[a-zA-Z]+$");
                 Regex numbersOnly = new Regex("^[\\d]+$");

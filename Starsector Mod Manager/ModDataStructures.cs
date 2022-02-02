@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 
 namespace Starsector_Mod_Manager
@@ -66,7 +67,8 @@ namespace Starsector_Mod_Manager
     {
         public string Major { get; set; }
         public string Minor { get; set; }
-        public string Patch { get; set; }
+        [DefaultValue("0")]
+        public string Patch { get; set; } = "0";
         public ModVersion(string major, string minor, string patch)
         {
             this.Major = major;
